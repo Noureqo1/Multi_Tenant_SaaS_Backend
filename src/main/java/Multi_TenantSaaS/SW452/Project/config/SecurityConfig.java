@@ -1,5 +1,6 @@
 package Multi_TenantSaaS.SW452.Project.config;
 
+import Multi_TenantSaaS.SW452.Project.multitenancy.TenantContextFilter;
 import Multi_TenantSaaS.SW452.Project.security.CustomUserDetailsService;
 import Multi_TenantSaaS.SW452.Project.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final TenantContextFilter tenantContextFilter;
     private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
@@ -27,14 +29,17 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/login", "/auth/register").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .userDetailsService(customUserDetailsService)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // JWT filter runs first to authenticate the user
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // Tenant filter runs after JWT filter to extract tenant from authenticated token
+                .addFilterAfter(tenantContextFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
