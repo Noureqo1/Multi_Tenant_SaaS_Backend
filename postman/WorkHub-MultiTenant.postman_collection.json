@@ -1,0 +1,215 @@
+﻿{
+  "info": {
+    "name": "WorkHub Multi-Tenant API",
+    "description": "Ready-to-run requests for active seeded users from DataInitializer.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Seeded Users",
+      "item": [
+        {
+          "name": "Login - Tenant1 Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{tenant1AdminEmail}}\",\n  \"password\": \"{{seededPassword}}\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login success', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  const token = body.token;",
+                  "  pm.environment.set('token_tenant1_admin', token);",
+                  "  pm.environment.set('activeToken', token);",
+                  "  pm.environment.set('activeTenantId', '1');",
+                  "  pm.environment.set('activeUserEmail', pm.environment.get('tenant1AdminEmail'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Tenant1 User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{tenant1UserEmail}}\",\n  \"password\": \"{{seededPassword}}\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login success', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  const token = body.token;",
+                  "  pm.environment.set('token_tenant1_user', token);",
+                  "  pm.environment.set('activeToken', token);",
+                  "  pm.environment.set('activeTenantId', '1');",
+                  "  pm.environment.set('activeUserEmail', pm.environment.get('tenant1UserEmail'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Tenant2 Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{tenant2AdminEmail}}\",\n  \"password\": \"{{seededPassword}}\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login success', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  const token = body.token;",
+                  "  pm.environment.set('token_tenant2_admin', token);",
+                  "  pm.environment.set('activeToken', token);",
+                  "  pm.environment.set('activeTenantId', '2');",
+                  "  pm.environment.set('activeUserEmail', pm.environment.get('tenant2AdminEmail'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth Me (activeToken)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{activeToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth","me"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Auth me success', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('activeTenantId', String(body.tenantId));",
+                  "  pm.environment.set('activeUserEmail', body.email);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Projects - Authenticated",
+      "item": [
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{activeToken}}" },
+              { "key": "X-Tenant-ID", "value": "{{activeTenantId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Project {{$timestamp}}\",\n  \"description\": \"Created from Postman collection\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create project success', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.id) pm.environment.set('activeProjectId', String(body.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{activeToken}}" },
+              { "key": "X-Tenant-ID", "value": "{{activeTenantId}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get projects success', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (Array.isArray(body) && body.length > 0 && !pm.environment.get('activeProjectId')) {",
+                  "    pm.environment.set('activeProjectId', String(body[0].id));",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Project By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{activeToken}}" },
+              { "key": "X-Tenant-ID", "value": "{{activeTenantId}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/projects/{{activeProjectId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{activeProjectId}}"] }
+          }
+        },
+        {
+          "name": "Add Task To Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{activeToken}}" },
+              { "key": "X-Tenant-ID", "value": "{{activeTenantId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/projects/{{activeProjectId}}/tasks", "host": ["{{baseUrl}}"], "path": ["projects","{{activeProjectId}}","tasks"] },
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman Task {{$timestamp}}\",\n  \"status\": \"PENDING\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}
