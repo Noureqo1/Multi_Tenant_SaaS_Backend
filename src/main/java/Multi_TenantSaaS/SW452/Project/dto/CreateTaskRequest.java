@@ -1,3 +1,8 @@
 package Multi_TenantSaaS.SW452.Project.dto;
 
-public record CreateTaskRequest(String title, String status) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record CreateTaskRequest(
+	@NotBlank(message = "Task title is required") String title,
+	@NotBlank(message = "Task status is required") String status
+) {}

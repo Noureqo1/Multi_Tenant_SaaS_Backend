@@ -36,12 +36,19 @@ public class Tenant_Connection_Provider implements MultiTenantConnectionProvider
         Connection connection = getAnyConnection();
         
         try {
+            String schemaName = sanitizeSchemaName(tenantIdentifier);
+
+            // Ensure schema exists so new tenants can be used immediately.
+            connection.createStatement().execute(
+                "CREATE SCHEMA IF NOT EXISTS " + schemaName
+            );
+
             // Set the PostgreSQL search_path to the tenant's schema
             // This ensures all unqualified table references resolve to this schema
             connection.createStatement().execute(
-                "SET search_path TO " + sanitizeSchemaName(tenantIdentifier)
+                "SET search_path TO " + schemaName
             );
-            log.debug("Schema switched to: {}", tenantIdentifier);
+            log.debug("Schema switched to: {}", schemaName);
         } catch (SQLException e) {
             log.error("Failed to switch schema to: {}", tenantIdentifier, e);
             throw new SQLException("Could not switch to tenant schema: " + tenantIdentifier, e);
@@ -90,6 +97,7 @@ public class Tenant_Connection_Provider implements MultiTenantConnectionProvider
             return TenantContext.DEFAULT_TENANT;
         }
         // Only allow alphanumeric characters and underscores
-        return schemaName.replaceAll("[^a-zA-Z0-9_]", "");
+        String sanitized = schemaName.replaceAll("[^a-zA-Z0-9_]", "");
+        return sanitized.isBlank() ? TenantContext.DEFAULT_TENANT : sanitized;
     }
 }

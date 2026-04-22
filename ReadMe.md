@@ -1,32 +1,98 @@
-# Read Me First
-The following was discovered as part of building this project:
+# Multi Tenant SaaS Backend (PostgreSQL)
 
-* The original package name 'Multi-TenantSaaS.SW452.Project' is invalid and this project uses 'Multi_TenantSaaS.SW452.Project' instead.
+This project is now configured to use PostgreSQL by default with schema-per-tenant multi-tenancy.
 
-# Getting Started
+## 1. Prerequisites
 
-### Reference Documentation
-For further reference, please consider the following sections:
+- Java 17
+- PostgreSQL 14+
+- Gradle wrapper (already included)
 
-* [Official Gradle documentation](https://docs.gradle.org)
-* [Spring Boot Gradle Plugin Reference Guide](https://docs.spring.io/spring-boot/4.0.3/gradle-plugin)
-* [Create an OCI image](https://docs.spring.io/spring-boot/4.0.3/gradle-plugin/packaging-oci-image.html)
-* [Spring Data JPA](https://docs.spring.io/spring-boot/4.0.3/reference/data/sql.html#data.sql.jpa-and-spring-data)
-* [Spring Web](https://docs.spring.io/spring-boot/4.0.3/reference/web/servlet.html)
-* [Spring Boot DevTools](https://docs.spring.io/spring-boot/4.0.3/reference/using/devtools.html)
-* [Validation](https://docs.spring.io/spring-boot/4.0.3/reference/io/validation.html)
+## 2. Create Databases
 
-### Guides
-The following guides illustrate how to use some features concretely:
+Create two databases:
 
-* [Accessing Data with JPA](https://spring.io/guides/gs/accessing-data-jpa/)
-* [Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)
-* [Serving Web Content with Spring MVC](https://spring.io/guides/gs/serving-web-content/)
-* [Building REST services with Spring](https://spring.io/guides/tutorials/rest/)
-* [Validation](https://spring.io/guides/gs/validating-form-input/)
+- `workhubdb` for application runtime
+- `workhubdb_test` for tests
 
-### Additional Links
-These additional references should also help you:
+Example with `psql`:
 
-* [Gradle Build Scans – insights for your project's build](https://scans.gradle.com#gradle)
+```sql
+CREATE DATABASE workhubdb;
+CREATE DATABASE workhubdb_test;
+```
+
+## 3. Configure Environment Variables
+
+PowerShell:
+
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5432/workhubdb"
+$env:DB_USERNAME="postgres"
+$env:DB_PASSWORD="admin"
+
+$env:TEST_DB_URL="jdbc:postgresql://localhost:5432/workhubdb_test"
+$env:TEST_DB_USERNAME="postgres"
+$env:TEST_DB_PASSWORD="admin"
+```
+
+If not provided, the app uses these defaults:
+
+- `DB_URL=jdbc:postgresql://localhost:5432/workhubdb`
+- `DB_USERNAME=postgres`
+- `DB_PASSWORD=admin`
+- `TEST_DB_URL=jdbc:postgresql://localhost:5432/workhubdb_test`
+- `TEST_DB_USERNAME=postgres`
+- `TEST_DB_PASSWORD=admin`
+
+## 4. Optional: Initialize Sample Schemas/Data
+
+Run SQL scripts from [src/main/resources/db/schema-setup.sql](src/main/resources/db/schema-setup.sql) and [src/main/resources/db/setup-database.sql](src/main/resources/db/setup-database.sql).
+
+Notes:
+
+- The app can auto-create tenant schemas on demand when a tenant is resolved.
+- Default tenant schema is `public`.
+
+## 5. Run the Application
+
+```powershell
+.\gradlew.bat bootRun
+```
+
+App runs on port `8082`.
+
+## 6. Run Tests
+
+```powershell
+.\gradlew.bat test
+```
+
+The `test` profile uses PostgreSQL (`workhubdb_test`) and `create-drop` DDL mode.
+
+## 7. Phase 1 Deliverables
+
+- API collection: [postman/WorkHub-MultiTenant.postman_collection.json](postman/WorkHub-MultiTenant.postman_collection.json)
+- Design note: [DESIGN-NOTE.pdf](DESIGN-NOTE.pdf)
+- Main phase-1 transactional write path: `POST /projects/with-task`
+
+## 8. Multi-Tenant Behavior (Schema Per Tenant)
+
+- Tenant is extracted from JWT claim (fallback: `X-Tenant-ID` header).
+- Tenant `n` maps to schema `tenant_n`.
+- Hibernate connection provider sets PostgreSQL `search_path` to tenant schema.
+- On release, connection `search_path` is reset to `public`.
+
+## 9. Useful Commands
+
+```powershell
+# Build only
+.\gradlew.bat build -x test
+
+# Run only tests
+.\gradlew.bat test
+
+# Show test report
+start .\build\reports\tests\test\index.html
+```
 

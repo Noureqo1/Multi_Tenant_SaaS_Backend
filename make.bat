@@ -41,7 +41,7 @@ echo.
 echo Run Commands:
 echo   make run            Start application (PostgreSQL)
 echo   make run-fast       Start without running tests first
-echo   make run-dev        Start with H2 database
+echo   make run-dev        Start with PostgreSQL local defaults
 echo.
 echo Database Commands:
 echo   make setup-db       Set up PostgreSQL database
@@ -60,43 +60,62 @@ echo.
 goto :end
 
 :clean
-echo 🧹 Cleaning build artifacts...
-gradlew.bat clean
+echo Cleaning build artifacts...
+call gradlew.bat clean
 goto :end
 
 :build
-echo 🏗️  Building application with tests...
-gradlew.bat build
+call :set-default-db-env
+echo Building application with tests...
+call gradlew.bat build
+if errorlevel 1 (
+    echo.
+    echo Build failed. If this is a PostgreSQL auth issue, verify TEST_DB_* values:
+    echo   set TEST_DB_URL=jdbc:postgresql://localhost:5432/workhubdb_test
+    echo   set TEST_DB_USERNAME=postgres
+    echo   set TEST_DB_PASSWORD=your_password
+)
 goto :end
 
 :build-fast
-echo ⚡ Fast build (skipping tests)...
-gradlew.bat build -x test
+echo Fast build ^(skipping tests^)...
+call gradlew.bat build -x test
 goto :end
 
 :test
-echo 🧪 Running tests...
-gradlew.bat test
+call :set-default-db-env
+echo Running tests...
+call gradlew.bat test
+if errorlevel 1 (
+    echo.
+    echo Tests failed. If this is a PostgreSQL auth issue, verify TEST_DB_* values:
+    echo   set TEST_DB_URL=jdbc:postgresql://localhost:5432/workhubdb_test
+    echo   set TEST_DB_USERNAME=postgres
+    echo   set TEST_DB_PASSWORD=your_password
+)
 goto :end
 
 :run
-echo 🚀 Starting WorkHub application...
-echo 📍 Application will be available at: http://localhost:8081
-gradlew.bat bootRun
+call :set-default-db-env
+echo Starting WorkHub application...
+echo Application will be available at: http://localhost:8082
+call gradlew.bat bootRun
 goto :end
 
 :run-fast
-echo ⚡ Fast start (skipping tests)...
-gradlew.bat bootRun -x test
+call :set-default-db-env
+echo Fast start ^(skipping tests^)...
+call gradlew.bat bootRun -x test
 goto :end
 
 :run-dev
-echo 🔧 Running in development mode (H2 database)...
-gradlew.bat bootRun -Dspring.profiles.active=dev
+call :set-default-db-env
+echo Running with local PostgreSQL defaults...
+call gradlew.bat bootRun
 goto :end
 
 :setup-db
-echo 🗄️  Setting up PostgreSQL database...
+echo Setting up PostgreSQL database...
 where psql >nul 2>nul
 if errorlevel 1 (
     echo ❌ PostgreSQL not found. Use 'make install-postgres' or 'make run-dev' instead
@@ -110,7 +129,7 @@ echo ✅ Database setup complete!
 goto :end
 
 :reset-db
-echo 🔄 Resetting database...
+echo Resetting database...
 where psql >nul 2>nul
 if errorlevel 1 (
     echo ❌ PostgreSQL not found. Use 'make install-postgres' or 'make run-dev' instead
@@ -123,7 +142,7 @@ echo ✅ Database reset complete!
 goto :end
 
 :check-postgres
-echo 🔍 Checking PostgreSQL installation...
+echo Checking PostgreSQL installation...
 where psql >nul 2>nul
 if errorlevel 1 (
     echo ❌ PostgreSQL not found
@@ -135,7 +154,7 @@ if errorlevel 1 (
 goto :end
 
 :install-postgres
-echo 📦 Installing PostgreSQL...
+echo Installing PostgreSQL...
 where choco >nul 2>nul
 if errorlevel 1 (
     echo ❌ Chocolatey not found. Install from https://chocolatey.org/
@@ -148,25 +167,34 @@ echo ⚠️  You may need to restart your terminal/IDE
 goto :end
 
 :test-api
-echo 🌐 Testing API endpoints...
+echo Testing API endpoints...
 echo Testing login endpoint...
 curl -X POST http://localhost:8081/auth/login -H "Content-Type: application/json" -d "{\"email\":\"admin@acme.com\",\"password\":\"password123\"}"
 if errorlevel 1 echo ❌ Make sure the application is running (make run)
 goto :end
 
 :info
-echo 📋 Project Information:
+echo Project Information:
 echo ======================
 echo Name: Multi_Tenant_SaaS_Backend
 echo JAR:  build\libs\Multi_Tenant_SaaS_Backend-0.0.1-SNAPSHOT.jar
 java -version 2>&1 | findstr "version"
-gradlew.bat --version | findstr "Gradle"
+call gradlew.bat --version | findstr "Gradle"
 goto :end
 
 :stop
-echo 🛑 Stopping Java processes...
+echo Stopping Java processes...
 taskkill /F /IM java.exe 2>nul
 if errorlevel 1 echo No Java processes found
 goto :end
+
+:set-default-db-env
+if not defined DB_URL set "DB_URL=jdbc:postgresql://localhost:5432/workhubdb"
+if not defined DB_USERNAME set "DB_USERNAME=postgres"
+if not defined DB_PASSWORD set "DB_PASSWORD=admin"
+if not defined TEST_DB_URL set "TEST_DB_URL=jdbc:postgresql://localhost:5432/workhubdb_test"
+if not defined TEST_DB_USERNAME set "TEST_DB_USERNAME=postgres"
+if not defined TEST_DB_PASSWORD set "TEST_DB_PASSWORD=admin"
+goto :eof
 
 :end
