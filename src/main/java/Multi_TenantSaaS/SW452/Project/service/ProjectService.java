@@ -38,6 +38,26 @@ public class ProjectService {
         return mapToProjectResponse(saved);
     }
 
+    @Transactional
+    public ProjectResponse createProjectWithInitialTask(CreateProjectWithTaskRequest req) {
+        log.info("Creating project with initial task: projectName={}, taskTitle={}", req.projectName(), req.taskTitle());
+
+        Project project = new Project();
+        project.setName(req.projectName());
+        project.setDescription(req.projectDescription());
+
+        Project savedProject = projectRepository.save(project);
+
+        Task task = new Task();
+        task.setTitle(req.taskTitle());
+        task.setStatus(req.taskStatus());
+        savedProject.addTask(task);
+
+        taskRepository.save(task);
+
+        return mapToProjectResponse(savedProject);
+    }
+
     @Transactional(readOnly = true)
     public List<ProjectResponse> getAllProjects() {
         log.info("Fetching all projects");

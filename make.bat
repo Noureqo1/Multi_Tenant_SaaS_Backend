@@ -191,10 +191,10 @@ goto :end
 :set-default-db-env
 if not defined DB_URL set "DB_URL=jdbc:postgresql://localhost:5432/workhubdb"
 if not defined DB_USERNAME set "DB_USERNAME=postgres"
-if not defined DB_PASSWORD set "DB_PASSWORD=postgres"
+if not defined DB_PASSWORD set "DB_PASSWORD=admin"
 if not defined TEST_DB_URL set "TEST_DB_URL=jdbc:postgresql://localhost:5432/workhubdb_test"
 if not defined TEST_DB_USERNAME set "TEST_DB_USERNAME=postgres"
-if not defined TEST_DB_PASSWORD set "TEST_DB_PASSWORD=postgres"
+if not defined TEST_DB_PASSWORD set "TEST_DB_PASSWORD=admin"
 goto :eof
 
 :end

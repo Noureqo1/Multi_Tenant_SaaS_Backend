@@ -29,21 +29,21 @@ PowerShell:
 ```powershell
 $env:DB_URL="jdbc:postgresql://localhost:5432/workhubdb"
 $env:DB_USERNAME="postgres"
-$env:DB_PASSWORD="postgres"
+$env:DB_PASSWORD="admin"
 
 $env:TEST_DB_URL="jdbc:postgresql://localhost:5432/workhubdb_test"
 $env:TEST_DB_USERNAME="postgres"
-$env:TEST_DB_PASSWORD="postgres"
+$env:TEST_DB_PASSWORD="admin"
 ```
 
 If not provided, the app uses these defaults:
 
 - `DB_URL=jdbc:postgresql://localhost:5432/workhubdb`
 - `DB_USERNAME=postgres`
-- `DB_PASSWORD=postgres`
+- `DB_PASSWORD=admin`
 - `TEST_DB_URL=jdbc:postgresql://localhost:5432/workhubdb_test`
 - `TEST_DB_USERNAME=postgres`
-- `TEST_DB_PASSWORD=postgres`
+- `TEST_DB_PASSWORD=admin`
 
 ## 4. Optional: Initialize Sample Schemas/Data
 
@@ -70,14 +70,20 @@ App runs on port `8082`.
 
 The `test` profile uses PostgreSQL (`workhubdb_test`) and `create-drop` DDL mode.
 
-## 7. Multi-Tenant Behavior (Schema Per Tenant)
+## 7. Phase 1 Deliverables
+
+- API collection: [postman/WorkHub-MultiTenant.postman_collection.json](postman/WorkHub-MultiTenant.postman_collection.json)
+- Design note: [DESIGN-NOTE.pdf](DESIGN-NOTE.pdf)
+- Main phase-1 transactional write path: `POST /projects/with-task`
+
+## 8. Multi-Tenant Behavior (Schema Per Tenant)
 
 - Tenant is extracted from JWT claim (fallback: `X-Tenant-ID` header).
 - Tenant `n` maps to schema `tenant_n`.
 - Hibernate connection provider sets PostgreSQL `search_path` to tenant schema.
 - On release, connection `search_path` is reset to `public`.
 
-## 8. Useful Commands
+## 9. Useful Commands
 
 ```powershell
 # Build only
