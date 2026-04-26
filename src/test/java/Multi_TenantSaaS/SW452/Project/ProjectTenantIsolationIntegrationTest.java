@@ -136,6 +136,38 @@ class ProjectTenantIsolationIntegrationTest {
         assertFalse(tenantACount == null || tenantACount == 0);
     }
 
+    @Test
+    void crossTenantWrite_shouldNotAffectOtherTenantData() {
+        createTenantSchemaAndTables("tenant_1");
+        createTenantSchemaAndTables("tenant_2");
+
+        // insert project in tenant B
+        tx.executeWithoutResult(status -> {
+            entityManager.createNativeQuery("""
+            INSERT INTO tenant_2.projects (id, name, description, version)
+            VALUES (100, 'Tenant B Project', 'Original', 0)
+        """).executeUpdate();
+        });
+
+        // tenant A tries to update (should not affect tenant B)
+        tx.executeWithoutResult(status -> {
+            entityManager.createNativeQuery("""
+            UPDATE tenant_1.projects
+            SET description = 'Hacked by tenant A'
+            WHERE id = 100
+        """).executeUpdate();
+        });
+
+        // verify tenant B data is still original
+        String description = tx.execute(status ->
+                (String) entityManager.createNativeQuery("""
+                SELECT description FROM tenant_2.projects WHERE id = 100
+            """).getSingleResult()
+        );
+
+        assertFalse("Hacked by tenant A".equals(description));
+    }
+
     private <T> T runInTenant(String tenantId, TenantOperation<T> operation) {
         TenantContext.setTenantId(tenantId);
         try {
