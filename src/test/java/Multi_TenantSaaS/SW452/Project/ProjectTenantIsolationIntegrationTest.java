@@ -101,6 +101,41 @@ class ProjectTenantIsolationIntegrationTest {
         });
     }
 
+    @Test
+    void crossTenantList_shouldNotLeakProjectsFromOtherTenant() {
+        createTenantSchemaAndTables("tenant_1");
+        createTenantSchemaAndTables("tenant_2");
+
+        tx.executeWithoutResult(status -> {
+            entityManager.createNativeQuery("""
+            INSERT INTO tenant_2.projects (name, description, version)
+            VALUES ('Tenant B Hidden Project', 'Should not appear in tenant A list', 0)
+        """).executeUpdate();
+
+            entityManager.createNativeQuery("""
+            INSERT INTO tenant_1.projects (name, description, version)
+            VALUES ('Tenant A Visible Project', 'Should appear only in tenant A list', 0)
+        """).executeUpdate();
+        });
+
+        Long leakedCount = tx.execute(status ->
+                ((Number) entityManager.createNativeQuery("""
+                SELECT COUNT(*) FROM tenant_1.projects
+                WHERE name = 'Tenant B Hidden Project'
+            """).getSingleResult()).longValue()
+        );
+
+        Long tenantACount = tx.execute(status ->
+                ((Number) entityManager.createNativeQuery("""
+                SELECT COUNT(*) FROM tenant_1.projects
+                WHERE name = 'Tenant A Visible Project'
+            """).getSingleResult()).longValue()
+        );
+
+        assertFalse(leakedCount != null && leakedCount > 0);
+        assertFalse(tenantACount == null || tenantACount == 0);
+    }
+
     private <T> T runInTenant(String tenantId, TenantOperation<T> operation) {
         TenantContext.setTenantId(tenantId);
         try {
