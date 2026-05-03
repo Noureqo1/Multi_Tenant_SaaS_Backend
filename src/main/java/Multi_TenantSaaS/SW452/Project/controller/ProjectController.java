@@ -8,6 +8,7 @@ import Multi_TenantSaaS.SW452.Project.dto.TaskResponse;
 import Multi_TenantSaaS.SW452.Project.service.ProjectService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
+    @PreAuthorize("hasRole('TENANT_ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProjectResponse createProject(@Valid @RequestBody CreateProjectRequest req) {
