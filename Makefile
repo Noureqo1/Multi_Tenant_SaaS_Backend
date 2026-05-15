@@ -9,18 +9,18 @@ SHELL := cmd.exe
 .SHELLFLAGS := /C
 GRADLEW := gradlew.bat
 OPEN_CMD := start
-MAIN_DB_ENV := set DB_URL=jdbc:postgresql://localhost:5432/workhubdb&& set DB_USERNAME=postgres&& set DB_PASSWORD=postgres&&
-TEST_DB_ENV := set TEST_DB_URL=jdbc:postgresql://localhost:5432/workhubdb_test&& set TEST_DB_USERNAME=postgres&& set TEST_DB_PASSWORD=admin&&
+MAIN_DB_ENV := set DB_URL=jdbc:postgresql://localhost:5433/workhubdb&& set DB_USERNAME=postgres&& set DB_PASSWORD=postgres&&
+TEST_DB_ENV := set TEST_DB_URL=jdbc:postgresql://localhost:5433/workhubdb_test&& set TEST_DB_USERNAME=postgres&& set TEST_DB_PASSWORD=admin&&
 else
 GRADLEW := ./gradlew
 OPEN_CMD := xdg-open
-MAIN_DB_ENV := DB_URL=jdbc:postgresql://localhost:5432/workhubdb DB_USERNAME=postgres DB_PASSWORD=postgres
-TEST_DB_ENV := TEST_DB_URL=jdbc:postgresql://localhost:5432/workhubdb_test TEST_DB_USERNAME=postgres TEST_DB_PASSWORD=admin
+MAIN_DB_ENV := DB_URL=jdbc:postgresql://localhost:5433/workhubdb DB_USERNAME=postgres DB_PASSWORD=postgres
+TEST_DB_ENV := TEST_DB_URL=jdbc:postgresql://localhost:5433/workhubdb_test TEST_DB_USERNAME=postgres TEST_DB_PASSWORD=admin
 endif
 
 PSQL ?= psql
 DB_HOST ?= localhost
-DB_PORT ?= 5432
+DB_PORT ?= 5433
 DB_USER ?= postgres
 DB_NAME ?= workhubdb
 TEST_DB_NAME ?= workhubdb_test

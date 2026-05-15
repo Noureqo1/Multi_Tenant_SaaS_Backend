@@ -22,6 +22,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final TenantContextFilter tenantContextFilter;
+    private final CorrelationIdFilter correlationIdFilter;
     private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
@@ -30,13 +31,16 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/register").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .userDetailsService(customUserDetailsService)
-                // JWT filter runs first to authenticate the user
+                // Correlation ID filter runs first to ensure all logs have a trace ID
+                .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
+                // JWT filter runs after correlation filter to authenticate the user
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 // Tenant filter runs after JWT filter to extract tenant from authenticated token
                 .addFilterAfter(tenantContextFilter, JwtAuthenticationFilter.class);
