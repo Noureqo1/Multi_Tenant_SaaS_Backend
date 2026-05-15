@@ -26,6 +26,6 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    @Column(nullable = false)
+    @Column(name = "tenant_id", nullable = false)
     private Long tenantId;
 }
