@@ -1,0 +1,95 @@
+spring:
+  application:
+    name: Multi_Tenant_SaaS_Backend
+
+  # PostgreSQL DataSource Configuration
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/workhubdb}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  # JPA / Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+
+  # ──────────────────────────────────────────────
+  # RabbitMQ Configuration (ACTIVE)
+  # ──────────────────────────────────────────────
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+  # ──────────────────────────────────────────────
+  # Kafka Configuration (ALTERNATIVE — uncomment to use, comment out RabbitMQ above)
+  # Activate with: spring.profiles.active=kafka
+  # ──────────────────────────────────────────────
+  # kafka:
+  #   bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  #   consumer:
+  #     group-id: workhub-group
+  #     auto-offset-reset: earliest
+  #     key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  #     value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+  #     properties:
+  #       spring.json.trusted.packages: "*"
+  #   producer:
+  #     key-serializer: org.apache.kafka.common.serialization.StringSerializer
+  #     value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+# Custom WorkHub RabbitMQ queue/exchange/routing-key names
+workhub:
+  rabbitmq:
+    queue: ${WORKHUB_QUEUE:report.generate}
+    exchange: ${WORKHUB_EXCHANGE:report.exchange}
+    routing-key: ${WORKHUB_ROUTING_KEY:report.generate}
+
+# Server Configuration
+server:
+  port: 8082
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:U29tZVN1cGVyU2VjcmV0S2V5U29tZVN1cGVyU2VjcmV0S2V5MTIzNDU2}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+app:
+  tenancy:
+    allow-header-fallback: false
+
+# ──────────────────────────────────────────────
+# Spring Actuator & Prometheus
+# ──────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,readiness,liveness
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# Logging for Multi-Tenancy Debugging
+logging:
+  level:
+    Multi_TenantSaaS.SW452.Project.multitenancy: DEBUG

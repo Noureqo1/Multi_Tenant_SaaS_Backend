@@ -2,9 +2,11 @@ package Multi_TenantSaaS.SW452.Project.controller;
 
 import Multi_TenantSaaS.SW452.Project.dto.CreateProjectRequest;
 import Multi_TenantSaaS.SW452.Project.dto.CreateProjectWithTaskRequest;
+import Multi_TenantSaaS.SW452.Project.dto.GenerateReportResponse;
 import Multi_TenantSaaS.SW452.Project.dto.ProjectResponse;
 import Multi_TenantSaaS.SW452.Project.dto.CreateTaskRequest;
 import Multi_TenantSaaS.SW452.Project.dto.TaskResponse;
+import Multi_TenantSaaS.SW452.Project.service.JobService;
 import Multi_TenantSaaS.SW452.Project.service.ProjectService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -18,9 +20,11 @@ import java.util.List;
 public class ProjectController {
     
     private final ProjectService projectService;
+    private final JobService jobService;
 
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, JobService jobService) {
         this.projectService = projectService;
+        this.jobService = jobService;
     }
 
     @PreAuthorize("hasRole('TENANT_ADMIN')")
@@ -51,4 +55,11 @@ public class ProjectController {
     public TaskResponse addTaskToProject(@PathVariable Long id, @Valid @RequestBody CreateTaskRequest req) {
         return projectService.addTaskToProject(id, req);
     }
+
+    @PostMapping("/{id}/generate-report")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public GenerateReportResponse generateReport(@PathVariable Long id) {
+        return jobService.createAndEnqueueReportJob(id);
+    }
 }
+

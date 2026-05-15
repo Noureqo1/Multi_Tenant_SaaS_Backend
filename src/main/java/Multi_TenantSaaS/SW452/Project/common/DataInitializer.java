@@ -43,5 +43,15 @@ public class DataInitializer implements CommandLineRunner {
                     .tenantId(2L)
                     .build());
         }
+
+        // Demo user for demo-phase2.sh script
+        if (userRepository.findByEmail("admin@tenant-a.com").isEmpty()) {
+            userRepository.save(User.builder()
+                    .email("admin@tenant-a.com")
+                    .password(passwordEncoder.encode("password"))
+                    .role(Role.TENANT_ADMIN)
+                    .tenantId(1L)
+                    .build());
+        }
     }
 }
