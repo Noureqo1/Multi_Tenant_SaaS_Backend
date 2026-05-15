@@ -24,4 +24,11 @@ public class AuthController {
     public AuthMeResponse me(Authentication authentication) {
         return authService.getCurrentUser(authentication.getName());
     }
+
+    @ExceptionHandler(Exception.class)
+    public org.springframework.http.ResponseEntity<String> handleException(Exception e) {
+        java.io.StringWriter sw = new java.io.StringWriter();
+        e.printStackTrace(new java.io.PrintWriter(sw));
+        return org.springframework.http.ResponseEntity.status(500).body(sw.toString());
+    }
 }
