@@ -1,0 +1,25 @@
+# Example Terraform variables for local Docker Desktop Kubernetes deployment
+
+kubeconfig_path = "~/.kube/config"
+kube_context    = "docker-desktop"
+
+namespace = "workhub"
+
+app_name     = "workhub-app"
+app_image    = "multi_tenant_saas_backend2-app:latest"
+app_replicas = 1
+
+app_port     = 8082
+service_port = 8082
+service_type = "NodePort"
+
+db_url      = "jdbc:postgresql://postgres:5432/workhubdb"
+db_username = "postgres"
+db_password = "postgres"
+
+rabbitmq_host     = "rabbitmq"
+rabbitmq_port     = 5672
+rabbitmq_username = "guest"
+rabbitmq_password = "guest"
+
+jwt_secret = "U29tZVN1cGVyU2VjcmV0S2V5U29tZVN1cGVyU2VjcmV0S2V5MTIzNDU2"
