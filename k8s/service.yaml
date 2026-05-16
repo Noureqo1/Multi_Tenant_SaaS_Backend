@@ -1,0 +1,32 @@
+# ============================================================
+# Service — Stable internal endpoint for the microservice
+# Template Placeholders:
+#   {{SERVICE_NAME}}  — logical service identifier
+#   {{PORT}}          — target container port (e.g. 8080)
+#
+# Type: ClusterIP  (internal-only by default)
+#   To expose externally on OCI OKE, change type to LoadBalancer.
+#   OKE will automatically provision an OCI Load Balancer.
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: "workhub-app-service"
+  namespace: "workhub"
+  labels:
+    app: "workhub-app"
+    tier: backend
+  annotations:
+    # Uncomment for OCI OKE flexible load balancer shape:
+    # service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+    # service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+    # service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "100"
+spec:
+  type: ClusterIP
+  selector:
+    app: "workhub-app"
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080

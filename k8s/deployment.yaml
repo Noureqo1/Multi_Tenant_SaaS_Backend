@@ -1,0 +1,115 @@
+# ============================================================
+# Deployment — HA Spring Boot microservice
+# Template Placeholders:
+#   {{SERVICE_NAME}}  — logical service identifier
+#   {{IMAGE_TAG}}     — container image ref  (e.g. oci-region/repo:v1.0.0)
+#   {{PORT}}          — container port (e.g. 8080)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "workhub-app"
+  namespace: "workhub"
+  labels:
+    app: "workhub-app"
+    tier: backend
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: "workhub-app"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: "workhub-app"
+        tier: backend
+    spec:
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: "workhub-app"
+          image: "workhub-backend:latest"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+          # ── Environment: ConfigMap (non-sensitive) ──────────
+          envFrom:
+            - configMapRef:
+                name: "workhub-app-config"
+
+          # ── Environment: Secrets (sensitive) ────────────────
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: "workhub-app-secret"
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "workhub-app-secret"
+                  key: DB_PASSWORD
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: "workhub-app-secret"
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "workhub-app-secret"
+                  key: RABBITMQ_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "workhub-app-secret"
+                  key: JWT_SECRET
+
+          # ── Health Probes (Spring Boot Actuator) ────────────
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+            timeoutSeconds: 3
+
+          # ── Resources ──────────────────────────────────────
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1024Mi"
+
+      restartPolicy: Always
