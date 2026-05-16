@@ -1,5 +1,6 @@
 package Multi_TenantSaaS.SW452.Project.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -34,6 +35,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding reportBinding(Queue reportQueue, TopicExchange reportExchange) {
         return BindingBuilder.bind(reportQueue).to(reportExchange).with(routingKey);
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
     }
 
     @Bean
