@@ -1,0 +1,38 @@
+# ============================================================
+# ConfigMap — Non-sensitive, externalized application config
+# Template Placeholders:
+#   {{SERVICE_NAME}}  — logical service identifier
+#   {{PORT}}          — container / server port (e.g. 8080)
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "workhub-app-config"
+  namespace: "workhub"
+  labels:
+    app: "workhub-app"
+    tier: backend
+data:
+  # ── Spring Boot ─────────────────────────────────────────────
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+
+  # ── DataSource (non-secret parts) ──────────────────────────
+  DB_URL: "jdbc:postgresql://postgres:5432/workhubdb"
+
+  # ── RabbitMQ (non-secret parts) ────────────────────────────
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+
+  # ── JWT (non-secret) ──────────────────────────────────────
+  JWT_EXPIRATION: "86400000"
+
+  # ── WorkHub Messaging Topology ─────────────────────────────
+  WORKHUB_QUEUE: "report.generate"
+  WORKHUB_EXCHANGE: "report.exchange"
+  WORKHUB_ROUTING_KEY: "report.generate"
+
+  # ── Actuator ───────────────────────────────────────────────
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW__DETAILS: "always"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
