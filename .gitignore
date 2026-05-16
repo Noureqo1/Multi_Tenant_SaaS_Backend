@@ -1,4 +1,6 @@
 HELP.md
+
+### Gradle ###
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -35,3 +37,12 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Terraform local files ###
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/crash.log
+terraform/crash.*.log
+terraform/*.tfvars
+!terraform/*.tfvars.example
