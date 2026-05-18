@@ -6,6 +6,7 @@ import Multi_TenantSaaS.SW452.Project.dto.CreateProjectRequest;
 import Multi_TenantSaaS.SW452.Project.dto.ProjectResponse;
 import Multi_TenantSaaS.SW452.Project.multitenancy.TenantContextFilter;
 import Multi_TenantSaaS.SW452.Project.security.JwtAuthenticationFilter;
+import Multi_TenantSaaS.SW452.Project.service.JobService;
 import Multi_TenantSaaS.SW452.Project.service.ProjectService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ class ProjectControllerSecurityTest {
 
     @MockitoBean
     private ProjectService projectService;
+
+    @MockitoBean
+    private JobService jobService;
 
     @TestConfiguration
     @EnableMethodSecurity
