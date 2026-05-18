@@ -1,6 +1,50 @@
 # Multi Tenant SaaS Backend (PostgreSQL)
 
-This project is now configured to use PostgreSQL by default with schema-per-tenant multi-tenancy.
+Welcome to **WorkHub**, an enterprise-grade, cloud-native, and highly resilient **Multi-Tenant SaaS Backend** built on a high-performance Java 17 and Spring Boot architecture. 
+
+Designed for high-throughput enterprise applications, WorkHub implements schema-per-tenant isolation, dynamic tenant context routing, transactional event-driven patterns, and production-ready Kubernetes setups.
+
+---
+
+## 🌟 Key Architectural Pillars
+
+### 1. Schema-Per-Tenant Data Isolation
+To ensure strict security and compliance, each tenant operates inside a completely isolated PostgreSQL schema (e.g., `tenant_1`, `tenant_2`).
+* **Dynamic Resolution:** The tenant context is extracted at runtime from cryptographic claims within incoming JSON Web Tokens (JWT) inside the **[TenantContextFilter](file:///d:/EAD/Project/src/main/java/Multi_TenantSaaS/SW452/Project/multitenancy/TenantContextFilter.java)**.
+* **Hibernate Routing:** Connections are dynamically routed via the **[Tenant_Connection_Provider](file:///d:/EAD/Project/src/main/java/Multi_TenantSaaS/SW452/Project/multitenancy/Tenant_Connection_Provider.java)**, which dynamically alters the PostgreSQL `search_path` per request and resets it upon connection release.
+
+### 2. Eventual Consistency & Transactional Outbox Pattern
+WorkHub avoids the critical "dual-write" problem (where a database write succeeds but publishing to a message broker fails) by incorporating the Transactional Outbox pattern.
+* **Atomic Operations:** Business entity changes (such as generating reports) and their corresponding integration events are written to the `outbox_event` table inside the same transaction.
+* **Reliable Publishing:** An asynchronous dispatcher reads pending outbox events and reliably publishes them to **[RabbitMQ](file:///d:/EAD/Project/src/main/java/Multi_TenantSaaS/SW452/Project/config/RabbitMQConfig.java)**, guaranteeing at-least-once message delivery.
+
+### 3. Asynchronous Task Processing
+Heavy, long-running processes (like asynchronous report generation) are decoupled from the HTTP thread pool:
+* **Task Queues:** Jobs are dispatched to RabbitMQ, where dedicated consumers in **[ReportJobProducer](file:///d:/EAD/Project/src/main/java/Multi_TenantSaaS/SW452/Project/messaging/ReportJobProducer.java)** process them out-of-band.
+* **Status Polling:** Users can track job lifecycle status (e.g., `PENDING`, `RUNNING`, `COMPLETED`) via non-blocking status query endpoints.
+
+### 4. Cloud-Native & High Availability (HA) Readiness
+The application is fully containerized and orchestrated:
+* **Docker Compose:** Spin up the entire multi-service stack (Java App, PostgreSQL, RabbitMQ) locally using a single **[docker-compose.yml](file:///d:/EAD/Project/docker-compose.yml)**.
+* **Kubernetes:** Robust multi-replica HA deployments with self-healing readiness and liveness probes configured in **[k8s/](file:///d:/EAD/Project/k8s)**, supporting zero-downtime rolling updates and Canary deployment strategies.
+
+### 5. Production Observability
+Built-in tools ensure full visibility and quick troubleshooting in production:
+* **Actuator Telemetry:** Health monitoring, liveness, and readiness states are exposed via Spring Boot Actuator endpoints.
+* **Prometheus Metrics:** Integrated Micrometer scraping endpoint for graphing system performance.
+* **Request Tracing:** End-to-end tracing across service boundaries using custom Correlation IDs (`X-Correlation-ID`) propagated in all logs.
+
+---
+
+## 🛠️ Technology Stack
+
+* **Framework:** Spring Boot, Spring Data JPA, Hibernate, Spring Security.
+* **Database:** PostgreSQL (Schema-per-Tenant Multi-Tenancy).
+* **Messaging:** RabbitMQ (AMQP).
+* **Testing & Benchmarks:** JUnit 5, Postman/Newman, and `k6` for high-throughput load tests.
+* **Infrastructure:** Docker, Kubernetes (K8s manifests & Canary configurations).
+
+---
 
 ## 1. Prerequisites
 
