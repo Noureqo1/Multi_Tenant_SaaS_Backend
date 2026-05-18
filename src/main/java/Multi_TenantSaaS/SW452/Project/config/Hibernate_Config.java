@@ -53,7 +53,6 @@ public class Hibernate_Config {
         properties.put(AvailableSettings.HBM2DDL_AUTO, "update");
         properties.put(AvailableSettings.SHOW_SQL, true);
         properties.put(AvailableSettings.FORMAT_SQL, true);
-        properties.put(AvailableSettings.DEFAULT_SCHEMA, "public");
 
         return properties;
     }
