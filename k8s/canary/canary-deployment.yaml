@@ -1,51 +1,39 @@
 # ============================================================
-# Deployment — HA Spring Boot microservice
-# Template Placeholders:
-#   {{SERVICE_NAME}}  — logical service identifier
-#   {{IMAGE_TAG}}     — container image ref  (e.g. oci-region/repo:v1.0.0)
-#   {{PORT}}          — container port (e.g. 8080)
+# Deployment — Canary (v2)
 # ============================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "workhub-app"
+  name: "workhub-app-canary"
   namespace: "workhub"
   labels:
     app: "workhub-app"
     tier: backend
+    version: canary
 spec:
-  replicas: 2
-  revisionHistoryLimit: 5
+  replicas: 1 # Start with 1 replica for the canary
   selector:
     matchLabels:
       app: "workhub-app"
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+      version: canary
   template:
     metadata:
       labels:
         app: "workhub-app"
         tier: backend
+        version: canary
     spec:
       terminationGracePeriodSeconds: 30
-
       containers:
         - name: "workhub-app"
-          image: "workhub-backend:latest"
+          image: "workhub-backend:v2" # Use the new version tag
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               protocol: TCP
-
-          # ── Environment: ConfigMap (non-sensitive) ──────────
           envFrom:
             - configMapRef:
                 name: "workhub-app-config"
-
-          # ── Environment: Secrets (sensitive) ────────────────
           env:
             - name: DB_USERNAME
               valueFrom:
@@ -73,7 +61,7 @@ spec:
                   name: "workhub-app-secret"
                   key: JWT_SECRET
 
-          # ── Health Probes (Spring Boot Actuator) ────────────
+          # Actuator Probes ensure traffic isn't routed until the canary is healthy
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -103,7 +91,6 @@ spec:
             failureThreshold: 30
             timeoutSeconds: 3
 
-          # ── Resources ──────────────────────────────────────
           resources:
             requests:
               cpu: "250m"
@@ -111,5 +98,3 @@ spec:
             limits:
               cpu: "1000m"
               memory: "1024Mi"
-
-      restartPolicy: Always

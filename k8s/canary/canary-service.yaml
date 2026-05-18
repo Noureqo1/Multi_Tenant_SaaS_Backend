@@ -1,0 +1,16 @@
+# ============================================================
+# Service — Canary Backend
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: workhub-app-service-canary
+  namespace: workhub
+spec:
+  selector:
+    app: workhub-app
+    version: canary
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
