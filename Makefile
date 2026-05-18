@@ -25,7 +25,7 @@ DB_USER ?= postgres
 DB_NAME ?= workhubdb
 TEST_DB_NAME ?= workhubdb_test
 
-.PHONY: help clean build build-fast test test-local run run-local run-debug init-db init-test-db seed-db reset-db test-report
+.PHONY: help clean build build-fast test test-local run run-local run-debug init-db init-test-db seed-db reset-db test-report k8s-deploy k8s-delete k8s-status
 
 help:
 	@echo Available targets:
@@ -42,6 +42,9 @@ help:
 	@echo   make seed-db         - Run SQL seed scripts on runtime database
 	@echo   make reset-db        - Drop and recreate runtime/test databases
 	@echo   make test-report     - Open test report in browser
+	@echo   make k8s-deploy      - Deploy all resources to Kubernetes
+	@echo   make k8s-delete      - Delete all resources from Kubernetes
+	@echo   make k8s-status      - View status of Kubernetes resources
 	@echo.
 	@echo Optional vars:
 	@echo   DB_USER, DB_HOST, DB_PORT, DB_NAME, TEST_DB_NAME, PSQL
@@ -92,3 +95,12 @@ reset-db:
 
 test-report:
 	$(OPEN_CMD) build/reports/tests/test/index.html
+
+k8s-deploy:
+	kubectl apply -f k8s/
+
+k8s-delete:
+	kubectl delete -f k8s/
+
+k8s-status:
+	kubectl get all
