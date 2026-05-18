@@ -8,6 +8,10 @@ metadata:
   namespace: workhub
   annotations:
     kubernetes.io/ingress.class: "nginx"
+    # Rate Limiting: Limit requests per second per IP to 10
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    # Rate Limiting: Limit concurrent connections per IP to 5
+    nginx.ingress.kubernetes.io/limit-connections: "5"
 spec:
   rules:
     - host: api.workhub.local

@@ -25,7 +25,7 @@ DB_USER ?= postgres
 DB_NAME ?= workhubdb
 TEST_DB_NAME ?= workhubdb_test
 
-.PHONY: help clean build build-fast test test-local run run-local run-debug init-db init-test-db seed-db reset-db test-report k8s-deploy k8s-delete k8s-status
+.PHONY: help clean build build-fast test test-local run run-local run-debug init-db init-test-db seed-db reset-db test-report docker-up docker-down docker-restart docker-logs k8s-deploy k8s-delete k8s-status k8s-canary-deploy k8s-canary-delete test-integration test-k6 rabbitmq-status
 
 help:
 	@echo Available targets:
@@ -42,9 +42,24 @@ help:
 	@echo   make seed-db         - Run SQL seed scripts on runtime database
 	@echo   make reset-db        - Drop and recreate runtime/test databases
 	@echo   make test-report     - Open test report in browser
-	@echo   make k8s-deploy      - Deploy all resources to Kubernetes
-	@echo   make k8s-delete      - Delete all resources from Kubernetes
-	@echo   make k8s-status      - View status of Kubernetes resources
+	@echo.
+	@echo Docker targets:
+	@echo   make docker-up       - Start the full docker-compose stack in background
+	@echo   make docker-down     - Stop and tear down all docker-compose containers
+	@echo   make docker-restart  - Restart the docker-compose services
+	@echo   make docker-logs     - Tail the live logs of the docker-compose stack
+	@echo.
+	@echo Kubernetes (K8s) targets:
+	@echo   make k8s-deploy      - Deploy standard services, deployment, configmap, secrets
+	@echo   make k8s-delete      - Delete standard deployments
+	@echo   make k8s-status      - View pods, services, deployments in workhub namespace
+	@echo   make k8s-canary-deploy - Deploy Canary routing, services, and rate-limited Ingress
+	@echo   make k8s-canary-delete - Delete Canary deployment configurations
+	@echo.
+	@echo Testing & Observability targets:
+	@echo   make test-integration - Run Python end-to-end integration and async outbox flow demo
+	@echo   make test-k6         - Run k6 performance load tests against defined SLO thresholds
+	@echo   make rabbitmq-status - Print live RabbitMQ queues and routing status from active broker
 	@echo.
 	@echo Optional vars:
 	@echo   DB_USER, DB_HOST, DB_PORT, DB_NAME, TEST_DB_NAME, PSQL
@@ -96,6 +111,20 @@ reset-db:
 test-report:
 	$(OPEN_CMD) build/reports/tests/test/index.html
 
+# --- Docker Targets ---
+docker-up:
+	docker compose up -d
+
+docker-down:
+	docker compose down
+
+docker-restart:
+	docker compose down && docker compose up -d
+
+docker-logs:
+	docker compose logs -f
+
+# --- Kubernetes Targets ---
 k8s-deploy:
 	kubectl apply -f k8s/
 
@@ -103,4 +132,20 @@ k8s-delete:
 	kubectl delete -f k8s/
 
 k8s-status:
-	kubectl get all
+	kubectl get all -n workhub
+
+k8s-canary-deploy:
+	kubectl apply -f k8s/canary/
+
+k8s-canary-delete:
+	kubectl delete -f k8s/canary/
+
+# --- Testing & Messaging Targets ---
+test-integration:
+	python scripts/demo.py
+
+test-k6:
+	k6 run k6/load-test.js
+
+rabbitmq-status:
+	docker exec workhub-rabbitmq rabbitmqctl list_queues
