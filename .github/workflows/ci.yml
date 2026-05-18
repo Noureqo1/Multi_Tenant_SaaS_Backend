@@ -1,0 +1,89 @@
+name: CI/CD Pipeline - WorkHub Backend
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build & Compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Compile Code
+        # Compile main and test classes to verify syntax and dependencies
+        run: ./gradlew compileJava compileTestJava
+
+  test:
+    name: Enterprise Integration Suite
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Tests (Unit & Integration)
+        # GitHub-hosted runners have Docker pre-installed, allowing Testcontainers to
+        # spin up PostgreSQL & RabbitMQ seamlessly during the testing phase.
+        run: ./gradlew test
+
+      - name: Upload Test Reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/test/
+          retention-days: 7
+
+  docker-build:
+    name: Containerization
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false # Set to true when registry login is configured
+          tags: workhub-backend:latest
+          # --- Optional: Push to Registry (Docker Hub or GHCR) ---
+          # 1. Add a `docker/login-action` step before this step using GitHub Secrets.
+          # 2. Update push to `true` and uncomment the tags below.
+          # tags: |
+          #   yourdockerhubusername/workhub-backend:latest
+          #   yourdockerhubusername/workhub-backend:${{ github.sha }}
